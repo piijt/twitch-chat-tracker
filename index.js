@@ -1,18 +1,20 @@
 const tmi = require('tmi.js');
 const fs = require('fs');
 const Sentiment = require('sentiment');
+const { ms_to_min } = require('./utils/time_converter')
+const { average, median} = require('./utils/array_helpers')
+const { v4: uuidv4 } = require('uuid');
 
-const channels = ["posty", "asmongold", "lontartv", "jazggz", 'notmes'];
+
+const channels = [/**"posty", "asmongold", "lontartv",*/ "jazggz", /**'notmes'*/];
 const chat_tracker = {};
 const sentiment = new Sentiment();
-
+const session_name = uuidv4();
 for(const channel of channels) {
     if(!chat_tracker[`#${channel}`]) {
         chat_tracker[`#${channel}`] = {};
     }
 }
-
-console.log(chat_tracker);
 
 const client = new tmi.Client({
     options: { debug: true, messagesLogLevel: "info" },
@@ -42,6 +44,25 @@ client.on('message', (channel, tags, message, self) => {
     ++chat_tracker[channel][tags.username].seen;
 
     setInterval(() => {
-        fs.writeFileSync('chat_tracker.json', JSON.stringify(chat_tracker));
-    }, 100_000)
+        fs.writeFileSync(`./data/${session_name}.json`, JSON.stringify(chat_tracker));
+        const retentionAvg = [];
+        for(const items of Object.entries(chat_tracker)){
+            console.log(items)
+            
+            for(const key of Object.keys(items[1])) {
+                const viewer_info = items[1][key];
+                const retention = new Date(viewer_info.table[viewer_info.table.length -1].time) - new Date(viewer_info.table[0].time)
+                
+                viewer_info.watchTime = retention;
+                retentionAvg.push(retention);
+                // for(const info of viewer_info.table) {
+                //     console.log(info[info.length -1].time - info[0].time);
+                // }
+                
+            }
+        }
+        console.log('retention len', retentionAvg.length);
+        console.log('average retention', average(retentionAvg.map(x => ms_to_min(x))) )
+    }, 10_000)
+    
 });
