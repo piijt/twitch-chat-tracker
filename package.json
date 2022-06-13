@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "ts-node index.ts"
+    "start-tw-ts": "ts-node index.ts", 
+    "start-tw": "node index.js",
+    "start": "node app.js"
   },
   "author": "Peter H. Jespersen",
   "license": "ISC",

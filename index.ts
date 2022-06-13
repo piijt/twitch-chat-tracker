@@ -1,7 +1,11 @@
 import { client } from 'tmi.js'
 import fs from 'fs'
+import { ms_to_min } from './utils/time_converter';
+import { mapToArray } from './utils/array_helpers';
 
-const channels = ['lontartv', 'notmes'];
+
+const streamers = JSON.parse(fs.readFileSync('./streamers.json', 'utf8'));
+streamers.push('lontartv', 'notmes');
 
 type viewer = Record<string, {
     seen?: number,
@@ -12,18 +16,7 @@ type viewer = Record<string, {
 type Tracker = {
     [channel: string]: viewer
 }
-
-
-
 const chat_tracker: Tracker = {};
-
-for (const channel of channels) {
-    if (!chat_tracker[`#${channel}`]) {
-        chat_tracker[`#${channel}`] = {};
-    }
-}
-
-
 
 
 const Client = new client({
@@ -32,57 +25,33 @@ const Client = new client({
         reconnect: true,
         secure: true
     },
-    channels: channels
+    channels: streamers
 });
 
 Client.connect().catch(console.error);
 
-let m = new Map()
-
 Client.on('message', (channel, tags, message, self) => {
     if (self) return;
-    if (!m.has(channel)) {
-        m.set(channel,
-            new Map()
-        )
+    if (!chat_tracker[channel]) {
+        chat_tracker[channel] = {};
     }
 
-    if (!m.get(channel).has(
-        tags.username
-    )) {
-        m.get(channel).set(tags.username,
-            {
-                table: [],
-                seen: 0
-            }
-        )
+    if (!chat_tracker[channel][tags?.username]) {
+        chat_tracker[channel][tags.username] = {
+            table: [],
+            seen: 0
+        }
     }
-
-    const currentTime = new Date();
-    m.get(channel).get(tags.username).seen += 1;
-    m.get(channel).get(tags.username).table.push(
-        { message, time: currentTime }
-    )
-    m.get(channel).get(tags.username).retention = currentTime.getTime() - m.get(channel).get(tags.username).table[0].time.getTime()
-        
-    console.log(m)
-    // console.log(channel)
-    // if (!chat_tracker[channel][tags.username] && chat_tracker[channel][tags.username] === null && chat_tracker[channel][tags.username] === undefined) {
-    //     chat_tracker[channel][tags.username] = {
-    //         table :  [],
-    //         seen : 0
-    //     }
-
     
-    //  };
-    // const chatter = chat_tracker[channel][tags.username]
-    // /* console.log(sentiment.analyze(message)); */
+    const currentTime = new Date();
 
-    // chat_tracker[channel][tags.username].table.push({ message: message, time: new Date(), /* sentiment: sentiment.analyze(message) */ })
-    // const realTimeRetention: number = new Date(chat_tracker[channel][tags.username].table[chat_tracker[channel][tags.username].table.length - 1].time).getTime() - new Date(chat_tracker[channel][tags.username].table[0].time).getTime()
-    // chatter.retention = realTimeRetention
-    // ++chat_tracker[channel][tags.username].seen;
+    chat_tracker[channel][tags.username].seen += 1;
+    
+    chat_tracker[channel][tags.username].table.push({ message, time: currentTime })
+    
+    chat_tracker[channel][tags.username].retention = ms_to_min(currentTime.getTime() - chat_tracker[channel][tags.username].table[0].time.getTime());
+
     setInterval(() => {
-        fs.writeFileSync('./data/chat_tracker.json', JSON.stringify(m));
-    }, 100_000)
+        fs.writeFileSync('./data/chat_tracker.json', JSON.stringify(chat_tracker));
+    }, 100_000);
 });
