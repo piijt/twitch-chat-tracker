@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start-tw-ts": "ts-node src/chat_tracker.ts",
-    "start-tw": "node js/index.js",
+    "start-tw": "node js/chat_tracker.js",
     "build:client": "tsc",
     "start": "npm run serve",
     "dev": "npm run watch",

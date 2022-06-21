@@ -4,7 +4,7 @@ import { ms_to_min } from './utils/time_converter';
 import { mapToArray } from './utils/array_helpers';
 
 
-const streamers = JSON.parse(fs.readFileSync('./streamers.json', 'utf8'));
+const streamers = JSON.parse(fs.readFileSync('./data/streamers.json', 'utf8'));
 streamers.push('lontartv', 'notmes');
 
 type viewer = Record<string, {
@@ -52,5 +52,5 @@ Client.on('message', (channel, tags, message, self) => {
 
     setInterval(() => {
         fs.writeFileSync('./data/chat_tracker.json', JSON.stringify(chat_tracker));
-    }, 100_000);
+    }, 10_000);
 });
