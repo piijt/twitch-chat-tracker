@@ -18,7 +18,6 @@ type Tracker = {
 }
 const chat_tracker: Tracker = {};
 
-
 const Client = new client({
     options: { debug: true, messagesLogLevel: "info", skipMembership: true, joinInterval: 300 },
     connection: {
@@ -34,8 +33,8 @@ Client.on('message', (channel, tags, message, self) => {
     if (self) return;
     if (!chat_tracker[channel]) {
         chat_tracker[channel] = {};
-    }
-
+    };
+    
     if (!chat_tracker[channel][tags?.username]) {
         chat_tracker[channel][tags.username] = {
             table: [],
